@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Real-Time</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    
+    <style>
+        #live-data {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            padding: 20px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Monitor en Tiempo Real</h2>
+    <div id="live-data">Esperando conexión...</div>
+
+    <script type="text/javascript">
+        var stompClient = null;
+
+        function connect() {
+            // 1. Conectar al endpoint definido en Java (/ws-endpoint)
+            var socket = new SockJS('http://localhost:8080/ws-endpoint');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                console.log('Conectado: ' + frame);
+                
+                // 2. Suscribirse al tema donde el servidor publica (/topic/updates)
+                stompClient.subscribe('/topic/updates', function (messageOutput) {
+                    showMessage(JSON.parse(messageOutput.body));
+                });
+            });
+        }
+
+        function showMessage(data) {
+            // Actualizar el elemento del DOM
+            document.getElementById('live-data').innerHTML = data.content;
+            
+            // Efecto visual simple (parpadeo)
+            var el = document.getElementById('live-data');
+            el.style.backgroundColor = "#e8f805";
+            setTimeout(() => el.style.backgroundColor = "transparent", 300);
+        }
+
+        // Iniciar conexión al cargar la página
+        connect();
+    </script>
+</body>
+</html>
